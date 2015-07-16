@@ -28,7 +28,7 @@ from handler import sign_in_handler
 
 
 def main():
-  port = 80
+  port = 1503
   application = tornado.web.Application(
     handlers=[
       (r"/account/regist", regist_handler.Regist_Handler),
