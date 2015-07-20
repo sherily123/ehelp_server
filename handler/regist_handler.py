@@ -12,6 +12,7 @@ from database import db
 
 class Regist_Handler(RequestHandler):
   def post(self):
+    print "receive a request"
     params = utils.decode_params(self.request)
     user_id = db.add_account(params)
     resp = {}
