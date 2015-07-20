@@ -28,11 +28,11 @@ def add_account(data):
   md5_encode = hashlib.md5()
   md5_encode.update(data[KEY.PASSWORD]+salt)
   password = md5_encode.hexdigest()
-  sql_account = "insert into account (account, password, salt) values ('%s', '%s', '%s')"
-  sql_user = "insert into user (id, nickname) values (%d, '%s')"
+  sql_account = "insert into account (account, password, salt, nickname, name) values (%d, '%s', '%s', '%s', '%s')"
+  sql_user = "insert into user (id, name, nickname, phone) values (%d, '%s', '%s', %d)"
   try:
-    insert_id = dbhelper.insert(sql_account%(data[KEY.ACCOUNT], password, salt))
-    dbhelper.insert(sql_user%(insert_id, data[KEY.ACCOUNT]))
+    insert_id = dbhelper.insert(sql_account%(data[KEY.ACCOUNT], password, salt, data[KEY.NICKNAME], data[KEY.NAME]))
+    dbhelper.insert(sql_user%(insert_id, data[KEY.NAME], data[KEY.NICKNAME], data[KEY.ACCOUNT]))
     return insert_id
   except:
     return -1
