@@ -11,6 +11,8 @@ ACCOUNT = 'account'
 PASSWORD = 'password'
 CHAT_TOKEN = 'chat_token'
 SALT = 'salt'
+NICKNAME = 'nickname'
+NAME = 'name'
 
 # user
 USER_ID = 'user_id'
