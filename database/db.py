@@ -189,14 +189,18 @@ def validate_password(data):
     if res is not None:
       user_id = res[0]
       password = res[1]
+      print password
+      print data[KEY.PASSWORD]
   except:
     pass
   finally:
     if password is None or data[KEY.PASSWORD] is None:
+      print "something none"
       return -1
     elif password == data[KEY.PASSWORD]:
       return user_id
     else:
+      print "not equal"
       return -1
 
 
