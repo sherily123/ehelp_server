@@ -21,9 +21,8 @@ add a new account to database.
         other number indicates success and the number is the id of the new account.
 '''
 def add_account(data):
-  if KEY.ACCOUNT not in data or KEY.PASSWORD not in data:
+  if KEY.ACCOUNT not in data or KEY.PASSWORD not in data or KEY.NAME not in data or KEY.NICKNAME not in data:
     return -1
-  
   salt = ''.join(random.sample(string.ascii_letters, 8))
   md5_encode = hashlib.md5()
   md5_encode.update(data[KEY.PASSWORD]+salt)
@@ -590,18 +589,19 @@ def get_comment_info(data):
 add a static relation between two users. The relation is single direction.
 @params includes two users' id, one is called id, the other called user_id.
 parameter type indicates type of static relation. two users in one direction could only have one type of relation.
-                 type:  0 indicates family relation.
-                        1 indicates geography relation.
-                        2 indicates career, interest and general friend relation.
+                 type:  0 indicates emergency contact relation.
+                        1 indicates normal relation.
 @return True if successfully adds.
         False otherwise.
 '''
 def add_static_relation(data):
-  if KEY.ID not in data or KEY.USER_ID not in data or KEY.TYPE not in data:
+  if KEY.ID not in data or KEY.USER_ACCOUNT not in data or KEY.TYPE not in data:
     return False
+  find_user_id = "select id from account where account = %d"
+  user_id = dbhelper.execute_fetchone(find_user_id%data[KEY.USER_ACCOUNT])
   sql = "replace into static_relation (user_a, user_b, type, time) values (%d, %d, %d, now())"
   try:
-    n = dbhelper.execute(sql%(data[KEY.ID], data[KEY.USER_ID], data[KEY.TYPE]))
+    n = dbhelper.execute(sql%(data[KEY.ID], user_id[0], data[KEY.TYPE]))
     if n > 0:
       return True
     else:

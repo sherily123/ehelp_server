@@ -53,7 +53,7 @@ def main():
       (r"/user/evaluate", user_relation_manage_handler.User_Relation_Manage_Handler),
       (r"/account/signin", sign_in_handler.Sign_In_Handler),
 
-    ])
+    ], debug=True)
   http_server = tornado.httpserver.HTTPServer(application)
   http_server.listen(port)
 

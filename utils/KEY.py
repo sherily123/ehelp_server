@@ -15,9 +15,7 @@ NICKNAME = 'nickname'
 NAME = 'name'
 
 # user
-USER_ID = 'user_id'
-NAME = 'name'
-NICKNAME = 'nickname'
+USER_ACCOUNT = 'user_account'
 GENDER = 'gender'
 AGE = 'age'
 PHONE = 'phone'
