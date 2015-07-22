@@ -590,18 +590,20 @@ def get_comment_info(data):
 add a static relation between two users. The relation is single direction.
 @params includes two users' id, one is called id, the other called user_id.
 parameter type indicates type of static relation. two users in one direction could only have one type of relation.
-                 type:  0 indicates family relation.
-                        1 indicates geography relation.
-                        2 indicates career, interest and general friend relation.
+                 type:  0 indicates emergency contact relation.
+                        1 indicates normal relation.
 @return True if successfully adds.
         False otherwise.
 '''
 def add_static_relation(data):
   if KEY.ID not in data or KEY.USER_ID not in data or KEY.TYPE not in data:
     return False
+  find_user_id = "select id from account where account = %d"
+  user_id = dbhelper.execute(find_user_id%(data[KEY.ACCOUNT]))
+  print user_id
   sql = "replace into static_relation (user_a, user_b, type, time) values (%d, %d, %d, now())"
   try:
-    n = dbhelper.execute(sql%(data[KEY.ID], data[KEY.USER_ID], data[KEY.TYPE]))
+    n = dbhelper.execute(sql%(data[KEY.ID], user_id, data[KEY.TYPE]))
     if n > 0:
       return True
     else:
