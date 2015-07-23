@@ -633,11 +633,15 @@ def remove_static_relation(data):
 '''
 give an evaluation to a user in a help event.
 @params includes: id, evaluater.
-                  user_id, evaluatee.
+                  user_account, evaluatee.
                   event_id, indicates the help event.
-                  value, the value of evaluation.
+                  attitude, attitude point
+                  skill, skill point
+                  satisfy, satisfied point
+                  assess, comment(optional)
+                  love_point, love_point to evaluatee
 @return True if successfully evaluate.
-        Flase otherwise.
+        False otherwise.
 '''
 def evaluate_user(data):
   if KEY.ID not in data or KEY.USER_ID not in data or KEY.EVENT_ID not in data:
@@ -861,5 +865,24 @@ def is_sign_in(user_id):
     result = False
   finally:
     return result
+
+
+'''
+get a event's followers id.
+@params includes event's id and type is default to 2, meaning following.
+@return an array of followers ids.
+'''
+def get_event_followers(data):
+  followers_id_list = []
+  if KEY.EVENT_ID not in data:
+    return followers_id_list
+  sql = "select supporter from support_relation where event_id = %d"%data[KEY.EVENT_ID]
+  sql += " and type = 2"
+  sql_result = dbhelper.execute_fetchall(sql)
+  for each_result in sql_result:
+    for each_id in each_result:
+      followers_id_list.append(each_id)
+
+  return followers_id_list
 
 
