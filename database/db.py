@@ -603,11 +603,11 @@ def add_static_relation(data):
   try:
     n = dbhelper.execute(sql%(data[KEY.ID], user_id[0], data[KEY.TYPE]))
     if n > 0:
-      return True
+      return user_id[0]
     else:
-      return False
+      return -1
   except:
-    return False
+    return -1
 
 
 '''
