@@ -21,9 +21,8 @@ add a new account to database.
         other number indicates success and the number is the id of the new account.
 '''
 def add_account(data):
-  if KEY.ACCOUNT not in data or KEY.PASSWORD not in data:
+  if KEY.ACCOUNT not in data or KEY.PASSWORD not in data or KEY.NAME not in data or KEY.NICKNAME not in data:
     return -1
-  
   salt = ''.join(random.sample(string.ascii_letters, 8))
   md5_encode = hashlib.md5()
   md5_encode.update(data[KEY.PASSWORD]+salt)
@@ -596,14 +595,13 @@ parameter type indicates type of static relation. two users in one direction cou
         False otherwise.
 '''
 def add_static_relation(data):
-  if KEY.ID not in data or KEY.USER_ID not in data or KEY.TYPE not in data:
+  if KEY.ID not in data or KEY.USER_ACCOUNT not in data or KEY.TYPE not in data:
     return False
   find_user_id = "select id from account where account = %d"
-  user_id = dbhelper.execute(find_user_id%(data[KEY.ACCOUNT]))
-  print user_id
+  user_id = dbhelper.execute_fetchone(find_user_id%data[KEY.USER_ACCOUNT])
   sql = "replace into static_relation (user_a, user_b, type, time) values (%d, %d, %d, now())"
   try:
-    n = dbhelper.execute(sql%(data[KEY.ID], user_id, data[KEY.TYPE]))
+    n = dbhelper.execute(sql%(data[KEY.ID], user_id[0], data[KEY.TYPE]))
     if n > 0:
       return True
     else:
@@ -635,11 +633,15 @@ def remove_static_relation(data):
 '''
 give an evaluation to a user in a help event.
 @params includes: id, evaluater.
-                  user_id, evaluatee.
+                  user_account, evaluatee.
                   event_id, indicates the help event.
-                  value, the value of evaluation.
+                  attitude, attitude point
+                  skill, skill point
+                  satisfy, satisfied point
+                  assess, comment(optional)
+                  love_point, love_point to evaluatee
 @return True if successfully evaluate.
-        Flase otherwise.
+        False otherwise.
 '''
 def evaluate_user(data):
   if KEY.ID not in data or KEY.USER_ID not in data or KEY.EVENT_ID not in data:
@@ -863,5 +865,24 @@ def is_sign_in(user_id):
     result = False
   finally:
     return result
+
+
+'''
+get a event's followers id.
+@params includes event's id and type is default to 2, meaning following.
+@return an array of followers ids.
+'''
+def get_event_followers(data):
+  followers_id_list = []
+  if KEY.EVENT_ID not in data:
+    return followers_id_list
+  sql = "select supporter from support_relation where event_id = %d"%data[KEY.EVENT_ID]
+  sql += " and type = 2"
+  sql_result = dbhelper.execute_fetchall(sql)
+  for each_result in sql_result:
+    for each_id in each_result:
+      followers_id_list.append(each_id)
+
+  return followers_id_list
 
 
