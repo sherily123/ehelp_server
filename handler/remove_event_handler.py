@@ -16,10 +16,12 @@ class Remove_Event_Handler(RequestHandler):
     
     resp = {}
     result = db.remove_event(params)
+    supports_id = db.get_event_followers(params)
     if KEY.EVENT_ID in params:
       resp[KEY.EVENT_ID] = params[KEY.EVENT_ID]
     if result:     
       resp[KEY.STATUS] = STATUS.OK
+      resp[KEY.SUPPORTS_ID] = supports_id
     else:
       resp[KEY.STATUS] = STATUS.ERROR
     
