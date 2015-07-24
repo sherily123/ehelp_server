@@ -15,6 +15,7 @@ class Regist_Handler(RequestHandler):
     params = utils.decode_params(self.request)
     user_id = db.add_account(params)
     resp = {}
+    print user_id
     if user_id > 0:
       resp[KEY.STATUS] = STATUS.OK
       resp[KEY.ACCOUNT] = params[KEY.ACCOUNT]
