@@ -4,6 +4,8 @@
 STATUS = 'status'
 OPERATION = 'operation'
 VALUE = 'value'
+ASSESS = 'assess'
+USER_LIST = 'user_list'
 
 # account
 ID = 'id'
@@ -16,6 +18,7 @@ NAME = 'name'
 
 # user
 USER_ACCOUNT = 'user_account'
+USER_ID = 'user_id'
 GENDER = 'gender'
 AGE = 'age'
 PHONE = 'phone'
@@ -41,6 +44,7 @@ FOLLOW_NUMBER = 'follow_number'
 SUPPORT_NUMBER = 'support_number'
 GROUP_PTS = 'group_pts'
 EVENT_LIST = 'event_list'
+SUPPORTS_ID = 'support_id'
 
 # comment
 COMMENT_ID = 'comment_id'

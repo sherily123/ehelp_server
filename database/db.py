@@ -73,8 +73,10 @@ def update_user(data):
   if KEY.NAME in data:
     data[KEY.NAME] = MySQLdb.escape_string(data[KEY.NAME].encode("utf8"))
     sql = "update user set name = '%s' where id = %d"
+    account_sql = "update account set name = '%s' where id = %d"
     try:
       dbhelper.execute(sql%(data[KEY.NAME], data[KEY.ID]))
+      dbhelper.execute(account_sql%(data[KEY.NAME], data[KEY.ID]))
       result &= True
     except:
       result &= False
@@ -82,8 +84,10 @@ def update_user(data):
   if KEY.NICKNAME in data:
     data[KEY.NICKNAME] = MySQLdb.escape_string(data[KEY.NICKNAME].encode("utf8"))
     sql = "update user set nickname = '%s' where id = %d"
+    account_sql = "update account set nickname = '%s' where id = %d"
     try:
       dbhelper.execute(sql%(data[KEY.NICKNAME], data[KEY.ID]))
+      dbhelper.execute(account_sql%(data[KEY.NICKNAME], data[KEY.ID]))
       result &= True
     except:
       result &= False
@@ -231,11 +235,13 @@ get user's information, which includes user's name, nickname, gender ...... .
            None if params error or database query error.
 '''
 def get_user_information(data):
-  if KEY.ID not in data:
+  if KEY.ACCOUNT not in data:
     return None
+  find_id = "select id from account where account = %d"
+  user_id = dbhelper.execute_fetchone(find_id%(data[KEY.ACCOUNT]))
   sql = "select * from user where id = %d"
   try:
-    res = dbhelper.execute_fetchone(sql%(data[KEY.ID]))
+    res = dbhelper.execute_fetchone(sql%(user_id[0]))
     if res is None:
       return None
     else:
@@ -599,7 +605,8 @@ def add_static_relation(data):
     return False
   find_user_id = "select id from account where account = %d"
   user_id = dbhelper.execute_fetchone(find_user_id%data[KEY.USER_ACCOUNT])
-  sql = "replace into static_relation (user_a, user_b, type, time) values (%d, %d, %d, now())"
+  #sql = "replace into static_relation (user_a, user_b, type, time) values (%d, %d, %d, now())"
+  sql = "insert into static_relation (user_a, user_b, type, time) values (%d, %d, %d, now())"
   try:
     n = dbhelper.execute(sql%(data[KEY.ID], user_id[0], data[KEY.TYPE]))
     if n > 0:
@@ -631,6 +638,74 @@ def remove_static_relation(data):
 
 
 '''
+return a list of static relation.
+@params includes id, user id.
+parameter type indicates type of static relation. two users in one direction could only have one type of relation.
+                 type:  0 indicates emergency contact relation.
+                        1 indicates normal relation.
+@return user list include account, nickname and avatar(could be null)
+        None indicates no static relation.
+'''
+def get_static_relation(data):
+  # related user list
+  user_list = []
+  # a related user, include account(table 'account'), nickname, avatar(table 'user')
+  one_user = {}
+  if KEY.ID not in data:
+    return user_list
+
+  # 1. get a user_id_list from table 'static_relation'
+  get_id_list_sql = "select user_b from static_relation where user_a = %d"%data[KEY.ID]
+  if KEY.TYPE in data:
+    if data[KEY.TYPE] == 1 or data[KEY.TYPE] == 0:
+      get_id_list_sql += " and type = %d"%data[KEY.TYPE]
+  sql_result = dbhelper.execute_fetchall(get_id_list_sql)
+  user_id_list = []
+  for each_result in sql_result:
+    for each_id in each_result:
+      user_id_list.append(each_id)
+  
+  # 2. get each user's information, put them in to user list
+  for each_user in user_id_list:
+    one_user[KEY.ID] = each_user
+    one_user = get_user(one_user)
+    if one_user is not None:
+      user_list.append(one_user)
+
+  return user_list
+
+
+
+'''
+get brief information of a user.
+@params includes id of the user to get.
+@return concrete information of the event:
+        account, nickname, avatar.
+        None indicates fail query.
+'''
+def get_user(data):
+  if KEY.ID not in data:
+    return None
+  one_user = None
+  get_account_sql = "select account from account where id = %d"
+  try:
+    account_result = dbhelper.execute_fetchone(get_account_sql%(data[KEY.ID]))
+    if account_result is not None:
+      one_user[KEY.ACCOUNT] = account_result[0]
+      user = {}
+      user[KEY.ID] = data[KEY.ID]
+      user = get_user_information(user)
+      if user is not None:
+        one_user[KEY.NICKNAME] = user[KEY.NICKNAME]
+        one_user[KEY.NAME] = user[KEY.NAME]
+  except:
+    pass
+  finally:
+    return one_user
+
+
+
+'''
 give an evaluation to a user in a help event.
 @params includes: id, evaluater.
                   user_account, evaluatee.
@@ -644,26 +719,41 @@ give an evaluation to a user in a help event.
         False otherwise.
 '''
 def evaluate_user(data):
-  if KEY.ID not in data or KEY.USER_ID not in data or KEY.EVENT_ID not in data:
+  if KEY.ID not in data or KEY.USER_ACCOUNT not in data or KEY.EVENT_ID not in data:
     return False
-  if KEY.VALUE not in data:
+  if KEY.ATTITUDE not in data or KEY.SKILL not in data or KEY.SATISFY not in data:
     return False
   
-  value_list = ast.literal_eval(data[KEY.VALUE])
+  # get a new average reputation value
   value = 0.0
-  for each_value in value_list:
-    value += each_value
-  list_len = len(value_list)
-  if list_len == 0:
-    list_len = 1
-  value /= list_len
+  value = data[KEY.ATTITUDE] + data[KEY.SKILL] + data[KEY.SATISFY]
+  value /= 3.0
 
-  sql = "replace into evaluation (event_id, from, to, value, time) values (%d, %d, %d, %f, now())"
-  try:
-    dbhelper.execute(sql%(data[KEY.EVENT_ID], data[KEY.ID], data[KEY.USER_ID], value))
-    return True
-  except:
-    return False
+  result = 0
+  # update each user's reputation in list
+  for each_account in data[KEY.USER_ACCOUNT]:
+    # get id by account
+    find_user_id = "select id from account where id = %d"
+    user_id = dbhelper.execute_fetchone(find_user_id%(data[KEY.USER_ACCOUNT]))
+
+    # update a record in table 'evaluation'
+    sql = "replace into evaluation (event_id, from, to, value, time, comment) values (%d, %d, %d, %f, now(), %s)"
+    # get an updated reputation value from table 'evaluation'
+    get_final_value = "select AVG(value) from evaluation where to = %d"
+    # update evaluatee's reputation in table 'user'
+    update_repu = "update user set reputation = %d where id = %d"
+    try:
+      if KEY.ASSESS not in data:
+        dbhelper.execute(sql%(data[KEY.EVENT_ID], data[KEY.ID], user_id[0], value, null))
+      else:
+        dbhelper.execute(sql%(data[KEY.EVENT_ID], data[KEY.ID], user_id[0], value, data[KEY.ASSESS]))
+      final_value = dbhelper.execute_fetchone(get_final_value%(user_id[0]))
+      dbhelper.execute(update_repu%(final_value[0], user_id[0]))
+      result += 1
+    except:
+      pass
+
+  return result
 
 
 

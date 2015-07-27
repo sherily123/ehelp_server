@@ -16,7 +16,8 @@ class Evaluate_Handler(RequestHandler):
     
     resp = {}
     result = db.evaluate_user(params)
-    if result:      
+    #love point add here
+    if result > 0:
       resp[KEY.STATUS] = STATUS.OK
     else:
       resp[KEY.STATUS] = STATUS.ERROR

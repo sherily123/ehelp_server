@@ -24,8 +24,8 @@ from handler import add_illness_handler
 from handler import get_illness_records_handler
 from handler import user_relation_manage_handler
 from handler import sign_in_handler
-
-
+from handler import evaluate_handler
+from handler import get_static_relation_handler
 
 def main():
   port = 1503
@@ -50,8 +50,9 @@ def main():
       (r"/health/query", get_health_records_handler.Get_Health_Records_Handler),
       (r"/illness/upload", add_illness_handler.Add_Illness_Handler),
       (r"/illness/query", get_illness_records_handler.Get_Illness_Records_Handler),
-      (r"/user/evaluate", user_relation_manage_handler.User_Relation_Manage_Handler),
+      (r"/user/evaluate", evaluate_handler.Evaluate_Handler),
       (r"/account/signin", sign_in_handler.Sign_In_Handler),
+      (r"/user/get_relation", get_static_relation_handler.Get_Static_Relation_Handler),
 
     ], debug=True)
   http_server = tornado.httpserver.HTTPServer(application)
