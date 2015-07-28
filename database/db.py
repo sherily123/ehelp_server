@@ -686,14 +686,14 @@ get brief information of a user.
 def get_user(data):
   if KEY.ID not in data:
     return None
-  one_user = None
+  one_user = {}
   get_account_sql = "select account from account where id = %d"
   try:
     account_result = dbhelper.execute_fetchone(get_account_sql%(data[KEY.ID]))
     if account_result is not None:
       one_user[KEY.ACCOUNT] = account_result[0]
       user = {}
-      user[KEY.ID] = data[KEY.ID]
+      user[KEY.ACCOUNT] = account_result[0]
       user = get_user_information(user)
       if user is not None:
         one_user[KEY.NICKNAME] = user[KEY.NICKNAME]
@@ -976,3 +976,26 @@ def get_event_followers(data):
   return followers_id_list
 
 
+
+'''
+get a supporter list of a event.
+@params includes event's id and launcher's id.
+@return an array of supporters accounts.
+'''
+def get_event_supporter(data):
+  supporter_list = []
+  if KEY.ID not in data or KEY.EVENT_ID not in data:
+    return support_list
+
+  # 1. find supporters id in table 'support_relation' by launcher id and event id
+  find_id_sql = "select supporter from support_relation where supportee = %d and event_id = %d"
+  id_result = dbhelper.execute_fetchall(find_id_sql%(data[KEY.ID], data[KEY.EVENT_ID]))
+
+  # 2. find accounts from table 'account' by ids
+  find_account_sql = "select account from account where id = %d"
+  if id_result is not None:
+    for each_id in id_result:
+      supporter_result = dbhelper.execute_fetchone(find_account_sql%(each_id))
+      supporter_list.append(supporter_result[0])
+
+  return supporter_list

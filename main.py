@@ -26,6 +26,8 @@ from handler import user_relation_manage_handler
 from handler import sign_in_handler
 from handler import evaluate_handler
 from handler import get_static_relation_handler
+from handler import get_event_supporter_handler
+
 
 def main():
   port = 1503
@@ -53,6 +55,7 @@ def main():
       (r"/user/evaluate", evaluate_handler.Evaluate_Handler),
       (r"/account/signin", sign_in_handler.Sign_In_Handler),
       (r"/user/get_relation", get_static_relation_handler.Get_Static_Relation_Handler),
+      (r"/event/get_supporter", get_event_supporter_handler.Get_Event_Supporter_Handler),
 
     ], debug=True)
   http_server = tornado.httpserver.HTTPServer(application)
