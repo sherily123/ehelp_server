@@ -257,6 +257,7 @@ def get_user_information(data):
       user[KEY.LATITUDE] = float(res[8])
       user[KEY.OCCUPATION] = res[9]
       user[KEY.REPUTATION] = float(res[10])
+      #user[KEY.AVATAR] = res[11]
       user[KEY.IDENTITY_ID] = res[12]
       user[KEY.IS_VERIFY] = res[14]
       return user
@@ -269,19 +270,28 @@ launch a help event by launcher.
 @params includes user's id and type of help event.
         help event types:
                          0 represents normal question.
-                         1 represents nornal help.
+                         1 represents normal help.
                          2 represents emergency.
-       other option params includes content of event, longitude and latitude of event.
+       other option params includes content of event, max helpers needed for helping, longitude and latitude of event.
 @return event_id if successfully launches.
         -1 if fails.
 '''
 def add_event(data): 
   if KEY.ID not in data or KEY.TYPE not in data:
     return -1
+  #if data[KEY.TYPE] == 1 and KEY.MAX_PEOPLE not in data:
+  #  return -1
+
   sql = "insert into event (launcher, type, time) values (%d, %d, now())"
+  help_sql = "insert into event (launcher, type, time, help_max) values (%d, %d, now(), %d)"
   event_id = -1
   try:
+    #if data[KEY.TYPE] == 1:
+    #  event_id = dbhelper.insert(help_sql%(data[KEY.ID], data[KEY.TYPE], data[KEY.MAX_PEOPLE]))
+    #else:
+    #  event_id = dbhelper.insert(sql%(data[KEY.ID], data[KEY.TYPE]))
     event_id = dbhelper.insert(sql%(data[KEY.ID], data[KEY.TYPE]))
+    print "database event id: %d"%event_id
     if event_id > 0:
       data[KEY.EVENT_ID] = event_id
       update_event(data)
@@ -316,6 +326,14 @@ def update_event(data):
       result &= True
     except:
       result &= False
+
+  #if data[KEY.TYPE] == 1 and KEY.MAX_PEOPLE in data:
+  #  sql = "update event set help_max = %d where id = %d"
+  #  try:
+  #    dbhelper.execute(sql%(data[KEY.MAX_PEOPLE]))
+  #    result &= True
+  #  except:
+  #    result &= False
 
   if KEY.STATE in data:
     if data[KEY.STATE] == 0:
@@ -375,6 +393,7 @@ def get_event_information(data):
       event_info[KEY.FOLLOW_NUMBER] = sql_result[8]
       event_info[KEY.SUPPORT_NUMBER] = sql_result[9]
       event_info[KEY.GROUP_PTS] = float(sql_result[10])
+      event_info[KEY.MAX_PEOPLE] = sql_result[11]
       user = {}
       user[KEY.ID] = event_info[KEY.LAUNCHER_ID]
       user = get_user_information(user)
@@ -396,12 +415,45 @@ def get_events(data, get_event_id_list):
   event_id_list = get_event_id_list(data)
   event_list = []
   event_info = {}
+  count = 0
+  sql = "select nickname from user where id = %d"
   for event_id in event_id_list:
     event_info[KEY.EVENT_ID] = event_id
     event_info = get_event_information(event_info)
     if event_info is not None:
+      count += 1
+      # find nickname of id
+      launcher_nickname = dbhelper.execute_fetchone(sql%(event_info[KEY.LAUNCHER_ID]))
+      event_info[KEY.LAUNCHER] = launcher_nickname[0]
       event_list.append(event_info)
+  print count
   return event_list
+
+
+
+'''
+get all events.
+@params includes option params includes state indicates all events or those starting or ended.
+                 type indicates type of events.
+@return an array of result event ids.
+'''
+def get_all_event_list(data):
+  event_id_list = []
+  sql = "select id from event where id > 0"
+  if KEY.STATE in data:
+    if data[KEY.STATE] == 0 or data[KEY.STATE] == 1:      
+      sql += " and state = %d"%data[KEY.STATE]
+  if KEY.TYPE in data:
+    if data[KEY.TYPE] >= 0 and data[KEY.TYPE] <= 2:
+      sql += " and type = %d"%data[KEY.TYPE]
+  sql += " order by time DESC"
+  sql_result = dbhelper.execute_fetchall(sql)
+  for each_result in sql_result:
+    for each_id in each_result:
+      event_id_list.append(each_id)
+
+  return event_id_list
+
 
 
 '''
@@ -482,6 +534,17 @@ def user_event_manage(data):
     sql = "replace into support_relation (event_id, supportee, supporter, type, time) values (%d, %d, %d, %d, now())"%(data[KEY.EVENT_ID], launcher_id, data[KEY.ID], data[KEY.OPERATION])
   try:
     dbhelper.execute(sql)
+    #count_supporter = "select count(*) from support_relation where event_id = %d and supportee = %d"%(data[KEY.EVENT_ID], launcher_id)
+    #help_max = "select help_max from event where id = %d and launcher = %d"%(data[KEY.EVENT_ID], launcher_id)
+    #supporters_result = dbhelper.execute_fetchone(count_supporter)
+    #help_max_result = dbhelper.execute_fetchone(help_max)
+    #update_state = "update event set state = %d where id = %d"
+    #if supporters_result[0] == help_max_result[0]:
+    #  update event state to "supporter enough"
+    #  dbhelper.execute(update_state%(2, data[KEY.EVENT_ID]))
+    #else:
+    #  update event state to "ing"
+    #  dbhelper.execute(update_state%(0, data[KEY.EVENT_ID]))
   except:
     return False
 
@@ -733,8 +796,8 @@ def evaluate_user(data):
   # update each user's reputation in list
   for each_account in data[KEY.USER_ACCOUNT]:
     # get id by account
-    find_user_id = "select id from account where id = %d"
-    user_id = dbhelper.execute_fetchone(find_user_id%(data[KEY.USER_ACCOUNT]))
+    find_user_id = "select id from account where account = %d"
+    user_id = dbhelper.execute_fetchone(find_user_id%(each_account))
 
     # update a record in table 'evaluation'
     sql = "replace into evaluation (event_id, from, to, value, time, comment) values (%d, %d, %d, %f, now(), %s)"
@@ -996,6 +1059,16 @@ def get_event_supporter(data):
   if id_result is not None:
     for each_id in id_result:
       supporter_result = dbhelper.execute_fetchone(find_account_sql%(each_id))
-      supporter_list.append(supporter_result[0])
+      supporter = {}
+      supporter[KEY.ACCOUNT] = supporter_result[0]
+      user_info = get_user_information(supporter)
+      if user_info is not None:
+        supporter.update(user_info)
+        supporter[KEY.ACCOUNT] = supporter_result[0]
+        supporter_list.append(supporter)
+      #supporter_list.append(supporter_result[0])
 
   return supporter_list
+
+
+
