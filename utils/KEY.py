@@ -45,6 +45,7 @@ SUPPORT_NUMBER = 'support_number'
 GROUP_PTS = 'group_pts'
 EVENT_LIST = 'event_list'
 SUPPORTS_ID = 'support_id'
+MAX_PEOPLE = 'max_people'
 
 # comment
 COMMENT_ID = 'comment_id'
@@ -60,4 +61,6 @@ HEALTH_LIST = 'health_list'
 ILLNESS_ID = 'illness_id'
 ILLNESS_LIST = 'illness_list'
 
-
+# push message
+SENDALL = 0
+SENDONE = 1
