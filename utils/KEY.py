@@ -46,6 +46,8 @@ GROUP_PTS = 'group_pts'
 EVENT_LIST = 'event_list'
 SUPPORTS_ID = 'support_id'
 MAX_PEOPLE = 'max_people'
+CURRENT_LONGITUDE = 'current_longitude'
+CURRENT_LATITUDE = 'current_latitude'
 
 # comment
 COMMENT_ID = 'comment_id'
@@ -64,3 +66,9 @@ ILLNESS_LIST = 'illness_list'
 # push message
 SENDALL = 0
 SENDONE = 1
+
+# evaluate
+ATTITUDE = 'attitude'
+SKILL = 'skill'
+SATISFY = 'satisfy'
+ASSESS = 'assess'
