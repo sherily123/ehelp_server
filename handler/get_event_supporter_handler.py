@@ -15,5 +15,6 @@ class Get_Event_Supporter_Handler(RequestHandler):
     resp = {}
     resp[KEY.USER_ACCOUNT] = db.get_event_supporter(params)
     resp[KEY.STATUS] = STATUS.OK
+    print resp
 
     self.write(json_encode(resp))
