@@ -279,19 +279,19 @@ launch a help event by launcher.
 def add_event(data): 
   if KEY.ID not in data or KEY.TYPE not in data:
     return -1
-  #if data[KEY.TYPE] == 1 and KEY.MAX_PEOPLE not in data:
-  #  return -1
+  if data[KEY.TYPE] == 1 and KEY.MAX_PEOPLE not in data:
+    return -1
 
   sql = "insert into event (launcher, type, time) values (%d, %d, now())"
   help_sql = "insert into event (launcher, type, time, help_max) values (%d, %d, now(), %d)"
   event_id = -1
   try:
-    #if data[KEY.TYPE] == 1:
-    #  event_id = dbhelper.insert(help_sql%(data[KEY.ID], data[KEY.TYPE], data[KEY.MAX_PEOPLE]))
-    #else:
-    #  event_id = dbhelper.insert(sql%(data[KEY.ID], data[KEY.TYPE]))
-    event_id = dbhelper.insert(sql%(data[KEY.ID], data[KEY.TYPE]))
-    print "database event id: %d"%event_id
+    if data[KEY.TYPE] == 1:
+      event_id = dbhelper.insert(help_sql%(data[KEY.ID], data[KEY.TYPE], data[KEY.MAX_PEOPLE]))
+    else:
+      event_id = dbhelper.insert(sql%(data[KEY.ID], data[KEY.TYPE]))
+    #event_id = dbhelper.insert(sql%(data[KEY.ID], data[KEY.TYPE]))
+    print "From add_event_handler: database event id: %d"%event_id
     if event_id > 0:
       data[KEY.EVENT_ID] = event_id
       update_event(data)
@@ -327,13 +327,13 @@ def update_event(data):
     except:
       result &= False
 
-  #if data[KEY.TYPE] == 1 and KEY.MAX_PEOPLE in data:
-  #  sql = "update event set help_max = %d where id = %d"
-  #  try:
-  #    dbhelper.execute(sql%(data[KEY.MAX_PEOPLE]))
-  #    result &= True
-  #  except:
-  #    result &= False
+  if data[KEY.TYPE] == 1 and KEY.MAX_PEOPLE in data:
+    sql = "update event set help_max = %d where id = %d"
+    try:
+      dbhelper.execute(sql%(data[KEY.MAX_PEOPLE], data[KEY.EVENT_ID]))
+      result &= True
+    except:
+      result &= False
 
   if KEY.STATE in data:
     if data[KEY.STATE] == 0:
@@ -426,7 +426,7 @@ def get_events(data, get_event_id_list):
       launcher_nickname = dbhelper.execute_fetchone(sql%(event_info[KEY.LAUNCHER_ID]))
       event_info[KEY.LAUNCHER] = launcher_nickname[0]
       event_list.append(event_info)
-  print count
+
   return event_list
 
 
@@ -526,25 +526,33 @@ def user_event_manage(data):
       launcher_id = sql_result[0]
   except:
     pass
+
   if launcher_id is None:
     return False
   if data[KEY.OPERATION] == 0:
     sql = "delete from support_relation where event_id = %d and supporter = %d"%(data[KEY.EVENT_ID], data[KEY.ID])
   else:
     sql = "replace into support_relation (event_id, supportee, supporter, type, time) values (%d, %d, %d, %d, now())"%(data[KEY.EVENT_ID], launcher_id, data[KEY.ID], data[KEY.OPERATION])
+  update_event = "update event set support_number = support_number+1 where id = %d"%(data[KEY.EVENT_ID])
+  count_supporter = "select count(*) from support_relation where event_id = %d and supportee = %d"%(data[KEY.EVENT_ID], launcher_id)
+  help_max = "select help_max from event where id = %d and launcher = %d"%(data[KEY.EVENT_ID], launcher_id)
+  update_state = "update event set state = %d where id = %d"
+
   try:
+    # update support_relation
     dbhelper.execute(sql)
-    #count_supporter = "select count(*) from support_relation where event_id = %d and supportee = %d"%(data[KEY.EVENT_ID], launcher_id)
-    #help_max = "select help_max from event where id = %d and launcher = %d"%(data[KEY.EVENT_ID], launcher_id)
-    #supporters_result = dbhelper.execute_fetchone(count_supporter)
-    #help_max_result = dbhelper.execute_fetchone(help_max)
-    #update_state = "update event set state = %d where id = %d"
-    #if supporters_result[0] == help_max_result[0]:
-    #  update event state to "supporter enough"
-    #  dbhelper.execute(update_state%(2, data[KEY.EVENT_ID]))
-    #else:
-    #  update event state to "ing"
-    #  dbhelper.execute(update_state%(0, data[KEY.EVENT_ID]))
+    # update event information
+    dbhelper.execute(update_event)
+
+    # Check if people are enough for helping
+    supporters_result = dbhelper.execute_fetchone(count_supporter)
+    help_max_result = dbhelper.execute_fetchone(help_max)
+    if supporters_result[0] == help_max_result[0]:
+      # update event state to "supporter enough"
+      dbhelper.execute(update_state%(2, data[KEY.EVENT_ID]))
+    else:
+      # update event state to "ing"
+      dbhelper.execute(update_state%(0, data[KEY.EVENT_ID]))
   except:
     return False
 
@@ -793,28 +801,35 @@ def evaluate_user(data):
   value /= 3.0
 
   result = 0
+  # split user_account string into long array
+  user_account = data[KEY.USER_ACCOUNT].split(",")
   # update each user's reputation in list
-  for each_account in data[KEY.USER_ACCOUNT]:
-    # get id by account
-    find_user_id = "select id from account where account = %d"
-    user_id = dbhelper.execute_fetchone(find_user_id%(each_account))
+  for each_account in user_account:
+    if (long(each_account) != 0):
+      # get id by account
+      find_user_id = "select id from account where account = %d"
+      user_id = dbhelper.execute_fetchone(find_user_id%(long(each_account)))
+      print "From evaluate_handler: %ld" % long(each_account)
 
-    # update a record in table 'evaluation'
-    sql = "replace into evaluation (event_id, from, to, value, time, comment) values (%d, %d, %d, %f, now(), %s)"
-    # get an updated reputation value from table 'evaluation'
-    get_final_value = "select AVG(value) from evaluation where to = %d"
-    # update evaluatee's reputation in table 'user'
-    update_repu = "update user set reputation = %d where id = %d"
-    try:
-      if KEY.ASSESS not in data:
-        dbhelper.execute(sql%(data[KEY.EVENT_ID], data[KEY.ID], user_id[0], value, null))
-      else:
-        dbhelper.execute(sql%(data[KEY.EVENT_ID], data[KEY.ID], user_id[0], value, data[KEY.ASSESS]))
-      final_value = dbhelper.execute_fetchone(get_final_value%(user_id[0]))
-      dbhelper.execute(update_repu%(final_value[0], user_id[0]))
-      result += 1
-    except:
-      pass
+      # update a record in table 'evaluation'
+      sql = "replace into evaluation (event_id, `from`, `to`, value, time, comment) values (%d, %d, %d, %f, now(), '%s')"
+      # get an updated reputation value from table 'evaluation'
+      get_final_value = "select AVG(value) from evaluation where `to` = %d"
+      # update evaluatee's reputation in table 'user'
+      update_repu = "update user set reputation = %d where id = %d"
+      try:
+        print "From evaluate_handler: before REPLACE"
+        print "From evaluate_handler: " + sql%(data[KEY.EVENT_ID], data[KEY.ID], user_id[0], value, data[KEY.ASSESS])
+        a = dbhelper.execute(sql%(data[KEY.EVENT_ID], data[KEY.ID], user_id[0], value, data[KEY.ASSESS]))
+        print "From evaluate_handler: EVENT_ID: %d;    FROM: %d;    TO: %d;    REPU: %f;    ASSESS: '%s'"%(data[KEY.EVENT_ID], data[KEY.ID], user_id[0], value, data[KEY.ASSESS])
+        print "From evaluate_handler: after REPLACE"
+        print "From evaluate_handler: result: %d"%a
+        final_value = dbhelper.execute_fetchone(get_final_value%(user_id[0]))
+        print "From evaluate_handler: final_value: %f"%(final_value[0])
+        dbhelper.execute(update_repu%(final_value[0], user_id[0]))
+        result += 1
+      except:
+        pass
 
   return result
 
@@ -1058,17 +1073,42 @@ def get_event_supporter(data):
   find_account_sql = "select account from account where id = %d"
   if id_result is not None:
     for each_id in id_result:
-      supporter_result = dbhelper.execute_fetchone(find_account_sql%(each_id))
+      supporter_result = dbhelper.execute_fetchone(find_account_sql%(each_id[0]))
+      print each_id
       supporter = {}
       supporter[KEY.ACCOUNT] = supporter_result[0]
       user_info = get_user_information(supporter)
+      # get current location of supporter
+      find_longitude_sql = "select longitude from support_relation where event_id = %d and supporter = %d"
+      find_latitude_sql = "select latitude from support_relation where event_id = %d and supporter = %d"
+      longitude_result = dbhelper.execute_fetchone(find_longitude_sql%(data[KEY.EVENT_ID], each_id[0]))
+      latitude_result = dbhelper.execute_fetchone(find_latitude_sql%(data[KEY.EVENT_ID], each_id[0]))
       if user_info is not None:
         supporter.update(user_info)
         supporter[KEY.ACCOUNT] = supporter_result[0]
+        supporter[KEY.LONGITUDE] = float(longitude_result[0])
+        supporter[KEY.LATITUDE] = float(latitude_result[0])
         supporter_list.append(supporter)
       #supporter_list.append(supporter_result[0])
-
+  print supporter_list
   return supporter_list
+
+
+'''
+update current user location.
+@params includes event's id, launcher's id and location.
+@return True if update successfully.
+        False otherwise.
+'''
+def update_location(data):
+  if KEY.LONGITUDE not in data or KEY.LATITUDE not in data or KEY.EVENT_ID not in data or KEY.ID not in data:
+    return False
+  sql = "update support_relation set longitude = %f, latitude = %f where event_id = %d and supporter = %d"
+  try:
+    dbhelper.execute(sql%(data[KEY.LONGITUDE], data[KEY.LATITUDE], data[KEY.EVENT_ID], data[KEY.ID]));
+    return True;
+  except:
+    return False;
 
 
 
