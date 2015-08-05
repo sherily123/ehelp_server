@@ -532,7 +532,7 @@ def user_event_manage(data):
   if data[KEY.OPERATION] == 0:
     sql = "delete from support_relation where event_id = %d and supporter = %d"%(data[KEY.EVENT_ID], data[KEY.ID])
   else:
-    sql = "replace into support_relation (event_id, supportee, supporter, type, time) values (%d, %d, %d, %d, now())"%(data[KEY.EVENT_ID], launcher_id, data[KEY.ID], data[KEY.OPERATION])
+    sql = "insert into support_relation (event_id, supportee, supporter, type, time) values (%d, %d, %d, %d, now())"%(data[KEY.EVENT_ID], launcher_id, data[KEY.ID], data[KEY.OPERATION])
   update_event = "update event set support_number = support_number+1 where id = %d"%(data[KEY.EVENT_ID])
   count_supporter = "select count(*) from support_relation where event_id = %d and supportee = %d"%(data[KEY.EVENT_ID], launcher_id)
   help_max = "select help_max from event where id = %d and launcher = %d"%(data[KEY.EVENT_ID], launcher_id)
@@ -540,7 +540,10 @@ def user_event_manage(data):
 
   try:
     # update support_relation
-    dbhelper.execute(sql)
+    p = dbhelper.execute(sql)
+    print "From user_event_manage_handler: attend result: %d"%p
+    if p == 0:
+      return False
     # update event information
     dbhelper.execute(update_event)
 
@@ -695,11 +698,13 @@ remove a static relation of two user.
         False otherwise.
 '''
 def remove_static_relation(data):
-  if KEY.ID not in data or KEY.USER_ID not in data:
+  if KEY.ID not in data or KEY.USER_ACCOUNT not in data:
     return False
+  find_user_id = "select id from account where account = %d"
+  user_id = dbhelper.execute_fetchone(find_user_id%data[KEY.USER_ACCOUNT])
   sql = "delete from static_relation where user_a = %d and user_b = %d"
   try:
-    n = dbhelper.execute(sql%(data[KEY.ID], data[KEY.USER_ID]))
+    n = dbhelper.execute(sql%(data[KEY.ID], user_id[0]))
     if n > 0:
       return True
     else:
@@ -1090,7 +1095,6 @@ def get_event_supporter(data):
         supporter[KEY.LATITUDE] = float(latitude_result[0])
         supporter_list.append(supporter)
       #supporter_list.append(supporter_result[0])
-  print supporter_list
   return supporter_list
 
 
@@ -1101,14 +1105,41 @@ update current user location.
         False otherwise.
 '''
 def update_location(data):
-  if KEY.LONGITUDE not in data or KEY.LATITUDE not in data or KEY.EVENT_ID not in data or KEY.ID not in data:
+  if KEY.LONGITUDE not in data or KEY.LATITUDE not in data or KEY.ID not in data:
     return False
-  sql = "update support_relation set longitude = %f, latitude = %f where event_id = %d and supporter = %d"
+
+  # if there is a event id, also update a helper's location
+  if KEY.EVENT_ID in data:
+    help_sql = "update support_relation set longitude = %f, latitude = %f where event_id = %d and supporter = %d"
+  # update a user's location, in table 'user'
+  sql = "update user set longitude = %f, latitude = %f where id = %d"
   try:
-    dbhelper.execute(sql%(data[KEY.LONGITUDE], data[KEY.LATITUDE], data[KEY.EVENT_ID], data[KEY.ID]));
-    return True;
+    dbhelper.execute(sql%(data[KEY.LONGITUDE], data[KEY.LATITUDE], data[KEY.ID]))
+    if KEY.EVENT_ID in data:
+      dbhelper.execute(help_sql%(data[KEY.LONGITUDE], data[KEY.LATITUDE], data[KEY.EVENT_ID], data[KEY.ID]))
+    return True
   except:
-    return False;
+    return False
+
+
+'''
+update_user corresponding push token.
+@params includes user's account, push token.
+@return True if update successfully.
+        False otherwise.
+'''
+def update_token(data):
+  if KEY.ID not in data or KEY.TOKEN not in data:
+    return False
+
+  sql = "update account set push_token = '%s' where id = %d"
+  try:
+    dbhelper.execute(sql%(data[KEY.TOKEN], data[KEY.ID]))
+    return True
+  except:
+    return False
+
+
 
 
 
