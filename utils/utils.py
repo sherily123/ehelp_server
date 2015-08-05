@@ -34,7 +34,7 @@ push message to devices.
 @return True if push messages successfully.
         False otherwise.
 '''
-def push_message(title, content, op, activity='', token=''):
+def push_message(title, content, op, token_list=[], activity=''):
   
   # Construct a Xinge app
   x = xinge.XingeApp(2100133741, '4f4ec6d90516dd970801835bf187dfed')
@@ -57,6 +57,7 @@ def push_message(title, content, op, activity='', token=''):
   action.activity = activity
   msg.action = action
 
+  # PUSH MESSAGE TO A LIST OF TOKEN!!!!
   # status to get return value of pushing message
   status = {}
   if op == 0:
