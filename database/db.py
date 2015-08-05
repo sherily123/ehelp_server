@@ -698,13 +698,13 @@ remove a static relation of two user.
         False otherwise.
 '''
 def remove_static_relation(data):
-  if KEY.ID not in data or KEY.USER_ACCOUNT not in data:
+  if KEY.ID not in data or KEY.USER_ACCOUNT not in data or KEY.TYPE not in data:
     return False
   find_user_id = "select id from account where account = %d"
   user_id = dbhelper.execute_fetchone(find_user_id%data[KEY.USER_ACCOUNT])
-  sql = "delete from static_relation where user_a = %d and user_b = %d"
+  sql = "delete from static_relation where user_a = %d and user_b = %d and type = %d"
   try:
-    n = dbhelper.execute(sql%(data[KEY.ID], user_id[0]))
+    n = dbhelper.execute(sql%(data[KEY.ID], user_id[0], data[KEY.TYPE]))
     if n > 0:
       return True
     else:
