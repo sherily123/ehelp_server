@@ -66,9 +66,14 @@ ILLNESS_LIST = 'illness_list'
 # push message
 SENDALL = 0
 SENDONE = 1
+TOKEN = 'token'
 
 # evaluate
 ATTITUDE = 'attitude'
 SKILL = 'skill'
 SATISFY = 'satisfy'
 ASSESS = 'assess'
+
+# baidu LBS
+USER = 0
+EVENT = 1
