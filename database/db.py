@@ -1141,5 +1141,24 @@ def update_token(data):
 
 
 
+'''
+get users' push token from database.
+@params includes users' id list.
+@return a list of tokens.
+        None otherwise.
+'''
+def get_push_token(data):
+  if data == []:
+    return None
+
+  sql = "select push_token from account where id = %d"
+  token_list = []
+  for user_id in data:
+    token_result = dbhelper.execute_fetchone(sql%(user_id))
+    if token_result is not None:
+      token_list.append(token_result[0])
+  print "From get push token function: "
+  print token_list
+  return token_list
 
 

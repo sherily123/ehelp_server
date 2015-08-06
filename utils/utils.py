@@ -34,7 +34,7 @@ push message to devices.
 @return True if push messages successfully.
         False otherwise.
 '''
-def push_message(title, content, op, token_list=[], activity=''):
+def push_message(title, content, op, token_list, activity=''):
   
   # Construct a Xinge app
   x = xinge.XingeApp(2100133741, '4f4ec6d90516dd970801835bf187dfed')
@@ -61,16 +61,28 @@ def push_message(title, content, op, token_list=[], activity=''):
   # status to get return value of pushing message
   status = {}
   if op == 0:
-    status = x.PushAllDevices(0, msg)
+    #status = x.PushAllDevices(0, msg)
+    ret = x.CreateMultipush(msg)
+    if ret[0] == 0:
+      #print "From push message function:"
+      #print ret
+      #print "From push message function: Successfully create a push id: %d"%int(ret[2])
+      #print "From push message function: Successfully receive a token list:"
+      #print token_list
+      push_id = int(ret[2])
+      status = x.PushDeviceListMultiple(push_id, token_list)
   elif op == 1:
     if token == '':
       return False
     status = x.PushSingleDevice(token, msg)
 
   if status != {}:
+    print "From push message function:"
     print status
     if status[0] == 0:
       return True
+    else:
+      return False
   else:
     return False
 

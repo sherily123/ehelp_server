@@ -77,3 +77,8 @@ ASSESS = 'assess'
 # baidu LBS
 USER = 0
 EVENT = 1
+GEOTABLE_ID = 'geotable_id'
+COORD_TYPE = 'coord_type'
+AK = 'ak'
+TITLE = 'title'
+RADIUS = 'radius'

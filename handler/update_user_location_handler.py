@@ -7,7 +7,7 @@ from tornado.escape import json_encode
 from utils import utils
 from utils import KEY
 from utils import STATUS
-#from utils import baidulbs
+from utils import baidulbs
 from database import db
 
 
@@ -17,8 +17,8 @@ class Update_User_Location_Handler(RequestHandler):
 
     resp = {}
     result = db.update_location(params)
-    #baiduResult = baidulbs.update_location(params, KEY.USER)
-    if result:
+    baiduResult = baidulbs.update_location(params, KEY.USER)
+    if result and baiduResult:
       resp[KEY.STATUS] = STATUS.OK
     else:
       resp[KEY.STATUS] = STATUS.ERROR
