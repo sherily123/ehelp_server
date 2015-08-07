@@ -1,5 +1,9 @@
 #!/usr/python
 
+# baidulbs.py #
+# baidu LBS Cloud operation #
+# Coded by Zeng Xiaoli, Aug.2015 #
+
 import json
 import KEY
 import STATUS
@@ -8,9 +12,6 @@ import utils
 import datetime
 import urllib
 import urllib2
-import sys
-reload(sys)
-sys.setdefaultencoding('utf-8')
 
 # Baidu LBS Cloud APP KEY
 ak = 'U9gBhjb8y58UEjWok8qzD5rG'
@@ -39,7 +40,8 @@ def update_location(data, type):
   if type == 1 and KEY.EVENT_ID not in data:
     return False
 
-  url = "http://api.map.baidu.com/geodata/v3/poi/create"
+  new_url = "http://api.map.baidu.com/geodata/v3/poi/create"
+  update_url = "http://api.map.baidu.com/geodata/v3/poi/update"
 
   # form a list of needed params
   values = {}
@@ -93,14 +95,16 @@ def get_user_location(data):
   req = urllib2.Request(url)
   response = urllib2.urlopen(req)
   data = json.loads(response.read())
+  print "From baidu LBS Cloud - get user location: status - %d"%(int(data['status']))
 
-  # get location array from response
-  contents = data['contents']
-  # get user_id from contents
-  user_id_list = []
-  for each_loc in contents:
-    if KEY.USER_ID in each_loc:
-      user_id_list.append(each_loc[KEY.USER_ID])
+  if 'contents' in data:
+    # get location array from response
+    contents = data['contents']
+    # get user_id from contents
+    user_id_list = []
+    for each_loc in contents:
+      if KEY.USER_ID in each_loc:
+        user_id_list.append(each_loc[KEY.USER_ID])
   print "From baidu LBS operation: near user id list:"
   print user_id_list
   return user_id_list
@@ -113,7 +117,7 @@ get a near event id list from Baidu LBS Cloud.
         None means failed.
 '''
 def get_event_location(data):
-  if KEY.LONGITUDE not in data or KEY.LATITIDU not in data:
+  if KEY.LONGITUDE not in data or KEY.LATITUDE not in data:
     return None
 
   # use location info in data to search near events in Cloud table 'event location'

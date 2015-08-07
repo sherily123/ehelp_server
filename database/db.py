@@ -1,5 +1,9 @@
 #!/usr/python
 
+# db.py #
+# database operation #
+# Coded by William Deng & Zeng Xiaoli, Aug.2015 #
+
 import sys
 import random
 import string
@@ -217,7 +221,7 @@ modify user's password to a new one, but not modify its salt value.
 def modify_password(data):
   if KEY.ACCOUNT not in data or KEY.PASSWORD not in data:
     return False
-  sql = "update account set password = '%s' where account = '%s'" 
+  sql = "update account set password = '%s' where account = %d" 
   try:
     n = dbhelper.execute(sql%(data[KEY.PASSWORD], data[KEY.ACCOUNT]))
     if n > 0:
@@ -327,13 +331,15 @@ def update_event(data):
     except:
       result &= False
 
-  if data[KEY.TYPE] == 1 and KEY.MAX_PEOPLE in data:
-    sql = "update event set help_max = %d where id = %d"
-    try:
-      dbhelper.execute(sql%(data[KEY.MAX_PEOPLE], data[KEY.EVENT_ID]))
-      result &= True
-    except:
-      result &= False
+  if KEY.TYPE in data:
+    print "From database - update event: data[KEY.TYPE] is %d"%(data[KEY.TYPE])
+    if data[KEY.TYPE] == 1 and KEY.MAX_PEOPLE in data:
+      sql = "update event set help_max = %d where id = %d"
+      try:
+        dbhelper.execute(sql%(data[KEY.MAX_PEOPLE], data[KEY.EVENT_ID]))
+        result &= True
+      except:
+        result &= False
 
   if KEY.STATE in data:
     if data[KEY.STATE] == 0:
@@ -432,26 +438,26 @@ def get_events(data, get_event_id_list):
 
 
 '''
-get all events.
-@params includes option params includes state indicates all events or those starting or ended.
+get near events.
+@params includes option params includes state indicates near events or those starting or ended.
                  type indicates type of events.
 @return an array of result event ids.
 '''
 def get_all_event_list(data):
   event_id_list = []
-  sql = "select id from event where id > 0"
+  sql = "select id from event where id = %d"
   if KEY.STATE in data:
-    if data[KEY.STATE] == 0 or data[KEY.STATE] == 1:      
+    if data[KEY.STATE] == 0 or data[KEY.STATE] == 1:
       sql += " and state = %d"%data[KEY.STATE]
   if KEY.TYPE in data:
     if data[KEY.TYPE] >= 0 and data[KEY.TYPE] <= 2:
       sql += " and type = %d"%data[KEY.TYPE]
-  sql += " order by time DESC"
-  sql_result = dbhelper.execute_fetchall(sql)
-  for each_result in sql_result:
-    for each_id in each_result:
-      event_id_list.append(each_id)
-
+  for event_id in data[KEY.EVENT_LIST]:
+    result = dbhelper.execute_fetchone(sql%event_id)
+    if result is not None:
+      event_id_list.append(result[0])
+  print "From database - get all events function: id list:"
+  print event_id_list
   return event_id_list
 
 
@@ -1157,8 +1163,28 @@ def get_push_token(data):
     token_result = dbhelper.execute_fetchone(sql%(user_id))
     if token_result is not None:
       token_list.append(token_result[0])
-  print "From get push token function: "
+  print "From database - get push token function: "
   print token_list
   return token_list
 
 
+'''
+get current user's location.
+@params includes user's id.
+@return user's location in table 'user'
+'''
+def get_user_current_location(data):
+  if KEY.ID not in data:
+    return None
+  location = {}
+  sql = "select longitude, latitude from user where id = %d"%(data[KEY.ID])
+
+  try:
+    location_result = dbhelper.execute_fetchone(sql)
+    location[KEY.LONGITUDE] = location_result[0]
+    location[KEY.LATITUDE] = location_result[1]
+    print "From database - get user current location:"
+    print location
+    return location
+  except:
+    return None

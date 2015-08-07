@@ -1,5 +1,9 @@
 #!/usr/python
 
+# utils.py #
+# utils function, include push message #
+# Coded by William Deng & Zeng Xiaoli, Aug.2015 #
+
 from tornado.web import RequestHandler
 from tornado.escape import json_encode
 
@@ -47,7 +51,7 @@ class Add_Event_Handler(RequestHandler):
             title = "New SOS"
             activity = ""
           content = resp[KEY.CONTENT]
-          utils.push_message(title, content, KEY.SENDALL, token_list)
+          utils.push_message(title, content, event_id, KEY.SENDALL, token_list)
       resp[KEY.STATUS] = STATUS.OK
     else:
       resp[KEY.STATUS] = STATUS.ERROR

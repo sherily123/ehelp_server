@@ -13,7 +13,8 @@ from database import db
 class Login_Handler(RequestHandler):
   def post(self):
     params = utils.decode_params(self.request)
-    
+    print "From login handler: "
+    print params
     resp = {}
     if KEY.SALT not in params:
       salt = db.get_salt(params)
@@ -22,6 +23,7 @@ class Login_Handler(RequestHandler):
       else:
         resp[KEY.ACCOUNT] = params[KEY.ACCOUNT]
         resp[KEY.SALT] = salt
+        #resp[KEY.STATUS] = STATUS.OK
     
     else:
       user_id = db.validate_password(params)
@@ -31,7 +33,9 @@ class Login_Handler(RequestHandler):
         resp[KEY.ID] = user_id
       else:
         resp[KEY.STATUS] = STATUS.ERROR
-    
+
+    print "From login handler: resp:"
+    print resp
     self.write(json_encode(resp))
 
     

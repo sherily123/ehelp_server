@@ -17,7 +17,7 @@ class Update_Event_Handler(RequestHandler):
     
     resp = {}
     result = db.update_event(params)
-    if KEY.LONGITUDE in data and KEY.LATITUDE in data:
+    if KEY.LONGITUDE in params and KEY.LATITUDE in params:
       baiduResult = baidulbs.update_location(params, KEY.EVENT)
     if KEY.EVENT_ID in params:
       resp[KEY.EVENT_ID] = params[KEY.EVENT_ID]

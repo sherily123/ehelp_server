@@ -34,7 +34,7 @@ push message to devices.
 @return True if push messages successfully.
         False otherwise.
 '''
-def push_message(title, content, op, token_list, activity=''):
+def push_message(title, content, event_id, op, token_list, activity=''):
   
   # Construct a Xinge app
   x = xinge.XingeApp(2100133741, '4f4ec6d90516dd970801835bf187dfed')
@@ -45,6 +45,8 @@ def push_message(title, content, op, token_list, activity=''):
   msg.title = title
   content.encode('utf-8')
   msg.content = content
+  # custom key-value, here is event_id
+  msg.custom = {'event_id' : str(event_id)}
   # notification style on devices
   style = xinge.Style()
   style.builderId = 2

@@ -15,12 +15,20 @@ class Test_Baidu_Handler(RequestHandler):
   def post(self):
     params = utils.decode_params(self.request)
 
+    # get current user location
+    user_loc = db.get_user_current_location(params)
+    # search near event list and get their event_ids
+    event_list = baidulbs.get_event_location(user_loc)
+    data = {}
+    data.update(params)
+    data[KEY.EVENT_LIST] = event_list
+    print "From test baidu handler: data to database is below:"
+    print data
+    print
+    # if there are event_ids, then get their information
     resp = {}
-    result = baidulbs.get_user_location(params)
-    if result is None:
-      resp[KEY.STATUS] = STATUS.ERROR
-    else:
-      resp[KEY.STATUS] = STATUS.OK
+    resp[KEY.EVENT_LIST] = db.get_events(data, db.get_all_event_list)
+    resp[KEY.STATUS] = STATUS.OK
 
     self.write(json_encode(resp))
 
