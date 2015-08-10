@@ -386,6 +386,8 @@ def get_event_information(data):
   sql = "select * from event where id = %d"
   try:
     sql_result = dbhelper.execute_fetchone(sql%(data[KEY.EVENT_ID]))
+    if data[KEY.EVENT_ID] == 526:
+      print "search for EVENT_ID = 526"
     if sql_result is not None:
       event_info = {}
       event_info[KEY.EVENT_ID] = sql_result[0]
@@ -420,19 +422,16 @@ get information of a collection of events.
 def get_events(data, get_event_id_list):
   event_id_list = get_event_id_list(data)
   event_list = []
-  event_info = {}
-  count = 0
   sql = "select nickname from user where id = %d"
   for event_id in event_id_list:
+    event_info = {}
     event_info[KEY.EVENT_ID] = event_id
     event_info = get_event_information(event_info)
     if event_info is not None:
-      count += 1
       # find nickname of id
       launcher_nickname = dbhelper.execute_fetchone(sql%(event_info[KEY.LAUNCHER_ID]))
       event_info[KEY.LAUNCHER] = launcher_nickname[0]
       event_list.append(event_info)
-
   return event_list
 
 
@@ -452,10 +451,12 @@ def get_all_event_list(data):
   if KEY.TYPE in data:
     if data[KEY.TYPE] >= 0 and data[KEY.TYPE] <= 2:
       sql += " and type = %d"%data[KEY.TYPE]
+  sql += " order by time DESC"
   for event_id in data[KEY.EVENT_LIST]:
     result = dbhelper.execute_fetchone(sql%event_id)
     if result is not None:
       event_id_list.append(result[0])
+  event_id_list = event_id_list[::-1]
   print "From database - get all events function: id list:"
   print event_id_list
   return event_id_list
@@ -1188,3 +1189,43 @@ def get_user_current_location(data):
     return location
   except:
     return None
+
+
+'''
+update file path in database of user's avatar.
+@params includes avatar path, user's id.
+@return True if update successfully.
+        False otherwise.
+'''
+def update_db_avatar(data):
+  if KEY.ID not in data or 'filepath' not in data:
+    return False
+  sql = "update user set avatar = '%s' where id = %d"
+  try:
+    result = dbhelper.execute(sql%(data['filepath'], data[KEY.ID]))
+    print "From database - update db avatar: update operation result: %d"%result
+    return True
+  except:
+    return False
+
+
+'''
+get file path in database of user's avatar.
+@params includes user's id.
+@return file path.
+        "" otherwise.
+'''
+def get_db_avatar(data):
+  if KEY.ID not in data:
+    return ""
+  sql = "select avatar from user where id = %d"
+  try:
+    result = dbhelper.execute_fetchone(sql%(data[KEY.ID]))
+    print "From database - get db avatar: user id - '%d', avatar - '%s'"%(data[KEY.ID], result[0])
+    return result[0]
+  except:
+    return ""
+
+
+
+

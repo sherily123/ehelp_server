@@ -40,17 +40,25 @@ def update_location(data, type):
   if type == 1 and KEY.EVENT_ID not in data:
     return False
 
+  #POST
   new_url = "http://api.map.baidu.com/geodata/v3/poi/create"
+  #POST
   update_url = "http://api.map.baidu.com/geodata/v3/poi/update"
+  #GET
+  search_url = "http://api.map.baidu.com/geodata/v3/poi/list?ak=%s&geotable_id=%d"
 
   # form a list of needed params
   values = {}
   if type == 0:
     geotable_id = user_table
     values[KEY.USER_ID] = data[KEY.ID]
+    search_url += "&user_id=%d,%d"
+    search_url = search_url%(ak, geotable_id, values[KEY.USER_ID], values[KEY.USER_ID])
   elif type == 1:
     geotable_id = event_table
     values[KEY.EVENT_ID] = data[KEY.EVENT_ID]
+    search_url += "&event_id=%d,%d"
+    search_url = search_url%(ak, geotable_id, values[KEY.EVENT_ID], values[KEY.EVENT_ID])
   values[KEY.AK] = ak
   values[KEY.LONGITUDE] = data[KEY.LONGITUDE]
   values[KEY.LATITUDE] = data[KEY.LATITUDE]
@@ -58,18 +66,30 @@ def update_location(data, type):
   values[KEY.GEOTABLE_ID] = geotable_id
   values[KEY.TITLE] = datetime.datetime.now()
 
-  # send params to Baidu LBS Cloud and get a response
-  data = urllib.urlencode(values)
-  response = urllib2.urlopen(url, data)
+  # search whether this event/user is existed.
+  isExist = urllib.urlopen(search_url)
+  existance = json.loads(isExist.read())
+  
+  # Yes, update loaction
+  if existance['size'] > 0:
+    values[KEY.ID] = existance['pois'][0]['id']
+    data = urllib.urlencode(values)
+    response = urllib.urlopen(update_url, data)
+  # No, create location
+  else:
+    data = urllib.urlencode(values)
+    response = urllib.urlopen(new_url, data)
 
   # turn string to json object, check if update successfully
   resp = json.loads(response.read())
   if resp['status'] == 0:
     print "From baidu LBS operation: Successfully update location, geotable: %d, id: %d"%(geotable_id, resp['id'])
+    print values[KEY.LONGITUDE], values[KEY.LATITUDE]
     return True
   else:
     print "From baidu LBS operation: Failed, return code: %d"%resp['status']
     return False
+
 
 
 '''
@@ -89,13 +109,14 @@ def get_user_location(data):
   if KEY.RADIUS in data:
     suffix = suffix%(data[KEY.LONGITUDE], data[KEY.LATITUDE], data[KEY.RADIUS], ak, user_table)
   else:
-    suffix = suffix%(data[KEY.LONGITUDE], data[KEY.LATITUDE], 500, ak, user_table)
+    suffix = suffix%(data[KEY.LONGITUDE], data[KEY.LATITUDE], 10000, ak, user_table)
   url += suffix
   
   req = urllib2.Request(url)
   response = urllib2.urlopen(req)
   data = json.loads(response.read())
   print "From baidu LBS Cloud - get user location: status - %d"%(int(data['status']))
+  print data
 
   if 'contents' in data:
     # get location array from response
@@ -123,8 +144,8 @@ def get_event_location(data):
   # use location info in data to search near events in Cloud table 'event location'
   # send GET request to Cloud
   url = "http://api.map.baidu.com/geosearch/v3/nearby?"
-  suffix = "q=&location=%f,%f&radius=%d&ak=%s&geotable_id=%d"
-  url += suffix%(data[KEY.LONGITUDE], data[KEY.LATITUDE], 500, ak, event_table)
+  suffix = "q=&location=%f,%f&radius=%d&ak=%s&geotable_id=%d&page_size=50"
+  url += suffix%(data[KEY.LONGITUDE], data[KEY.LATITUDE], 1000000, ak, event_table)
 
   req = urllib2.Request(url)
   response = urllib2.urlopen(req)

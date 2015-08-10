@@ -32,6 +32,7 @@ from handler import get_single_event_handler
 from handler import update_user_location_handler
 from handler import update_push_token_handler
 from handler import test_baidu_handler
+from handler import upload_avatar_handler
 
 def main():
   port = 1503
@@ -65,6 +66,7 @@ def main():
       (r"/user/update_location", update_user_location_handler.Update_User_Location_Handler),
       (r"/account/update_token", update_push_token_handler.Update_Push_Token_Handler),
       (r"/test_baidu", test_baidu_handler.Test_Baidu_Handler),
+      (r"/user/avatar", upload_avatar_handler.Upload_Avatar_Handler),
 
     ], debug=True)
   http_server = tornado.httpserver.HTTPServer(application)

@@ -16,6 +16,10 @@ class Get_Launch_Events_Handler(RequestHandler):
     
     resp = {}
     resp[KEY.EVENT_LIST] = db.get_events(params, db.get_launch_event_list)
+    for each in resp[KEY.EVENT_LIST]:
+      if each[KEY.EVENT_ID] == 526:
+        print "final handler EVENT_ID = 526"
+        print each
     resp[KEY.STATUS] = STATUS.OK
 
     self.write(json_encode(resp))

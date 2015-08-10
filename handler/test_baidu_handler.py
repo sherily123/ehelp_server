@@ -15,6 +15,12 @@ class Test_Baidu_Handler(RequestHandler):
   def post(self):
     params = utils.decode_params(self.request)
 
+    result = baidulbs.update_location(params, KEY.EVENT)
+    resp = {}
+    resp[KEY.STATUS] = STATUS.OK
+    self.write(json_encode(resp))
+
+'''
     # get current user location
     user_loc = db.get_user_current_location(params)
     # search near event list and get their event_ids
@@ -29,6 +35,6 @@ class Test_Baidu_Handler(RequestHandler):
     resp = {}
     resp[KEY.EVENT_LIST] = db.get_events(data, db.get_all_event_list)
     resp[KEY.STATUS] = STATUS.OK
+'''
 
-    self.write(json_encode(resp))
 
