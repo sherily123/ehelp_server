@@ -53,12 +53,12 @@ def update_location(data, type):
     geotable_id = user_table
     values[KEY.USER_ID] = data[KEY.ID]
     search_url += "&user_id=%d,%d"
-    search_url = search_url%(ak, geotable_id, values[KEY.USER_ID], values[KEY.USER_ID])
+    search_url = search_url%(ak, geotable_id, values[KEY.USER_ID], values[KEY.USER_ID]+1)
   elif type == 1:
     geotable_id = event_table
     values[KEY.EVENT_ID] = data[KEY.EVENT_ID]
     search_url += "&event_id=%d,%d"
-    search_url = search_url%(ak, geotable_id, values[KEY.EVENT_ID], values[KEY.EVENT_ID])
+    search_url = search_url%(ak, geotable_id, values[KEY.EVENT_ID], values[KEY.EVENT_ID]+1)
   values[KEY.AK] = ak
   values[KEY.LONGITUDE] = data[KEY.LONGITUDE]
   values[KEY.LATITUDE] = data[KEY.LATITUDE]
