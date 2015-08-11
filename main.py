@@ -33,6 +33,7 @@ from handler import update_user_location_handler
 from handler import update_push_token_handler
 from handler import test_baidu_handler
 from handler import upload_avatar_handler
+from handler import get_love_coin_handler
 
 def main():
   port = 1503
@@ -67,6 +68,7 @@ def main():
       (r"/account/update_token", update_push_token_handler.Update_Push_Token_Handler),
       (r"/test_baidu", test_baidu_handler.Test_Baidu_Handler),
       (r"/user/avatar", upload_avatar_handler.Upload_Avatar_Handler),
+      (r"/user/love_coins", get_love_coin_handler.Get_Love_Coin_Handler),
 
     ], debug=True)
   http_server = tornado.httpserver.HTTPServer(application)

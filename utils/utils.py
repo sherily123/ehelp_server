@@ -34,7 +34,7 @@ push message to devices.
 @return True if push messages successfully.
         False otherwise.
 '''
-def push_message(title, content, event_id, op, token_list, activity=''):
+def push_message(title, content, event_id, op, token_list, activity='com.example.Near.NearActivity'):
   
   # Construct a Xinge app
   x = xinge.XingeApp(2100133741, '4f4ec6d90516dd970801835bf187dfed')

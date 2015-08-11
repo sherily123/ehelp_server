@@ -6,6 +6,7 @@ OPERATION = 'operation'
 VALUE = 'value'
 ASSESS = 'assess'
 USER_LIST = 'user_list'
+LOVE_COIN = 'love_coin'
 
 # account
 ID = 'id'

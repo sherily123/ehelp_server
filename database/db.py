@@ -538,11 +538,13 @@ def user_event_manage(data):
     return False
   if data[KEY.OPERATION] == 0:
     sql = "delete from support_relation where event_id = %d and supporter = %d"%(data[KEY.EVENT_ID], data[KEY.ID])
+    update_event_sql = "update event set support_number = support_number-1 where id = %d"%(data[KEY.EVENT_ID])
   else:
     sql = "insert into support_relation (event_id, supportee, supporter, type, time) values (%d, %d, %d, %d, now())"%(data[KEY.EVENT_ID], launcher_id, data[KEY.ID], data[KEY.OPERATION])
-  update_event = "update event set support_number = support_number+1 where id = %d"%(data[KEY.EVENT_ID])
+    update_event_sql = "update event set support_number = support_number+1 where id = %d"%(data[KEY.EVENT_ID])
   count_supporter = "select count(*) from support_relation where event_id = %d and supportee = %d"%(data[KEY.EVENT_ID], launcher_id)
   help_max = "select help_max from event where id = %d and launcher = %d"%(data[KEY.EVENT_ID], launcher_id)
+  state_sql = "select state from event where id = %d and launcher = %d"%(data[KEY.EVENT_ID], launcher_id)
   update_state = "update event set state = %d where id = %d"
 
   try:
@@ -552,15 +554,17 @@ def user_event_manage(data):
     if p == 0:
       return False
     # update event information
-    dbhelper.execute(update_event)
+    dbhelper.execute(update_event_sql)
 
     # Check if people are enough for helping
     supporters_result = dbhelper.execute_fetchone(count_supporter)
     help_max_result = dbhelper.execute_fetchone(help_max)
-    if supporters_result[0] == help_max_result[0]:
+    state_result = dbhelper.execute_fetchone(state_sql)
+    if supporters_result[0] == help_max_result[0] and state_result[0] == 0:
       # update event state to "supporter enough"
       dbhelper.execute(update_state%(2, data[KEY.EVENT_ID]))
-    else:
+      print "From db update help event:", supporters_result[0], help_max_result[0]
+    elif supporters_result[0] < help_max_result[0] and state_result[0] == 2:
       # update event state to "ing"
       dbhelper.execute(update_state%(0, data[KEY.EVENT_ID]))
   except:
@@ -1013,7 +1017,7 @@ user could sign in once a day. Especially, if user has signed in today, this met
 def sign_in(data):
   if KEY.ID not in data:
     return False
-  if is_sign_in(user_id):
+  if is_sign_in(data[KEY.ID]):
     return False
   sql = "insert into sign_in (user_id, time) values (%d, now())"
   try:
@@ -1225,6 +1229,24 @@ def get_db_avatar(data):
     return result[0]
   except:
     return ""
+
+
+
+'''
+get user's love coin.
+@params includes user's id.
+@return coins.
+        -1 when none existed.
+'''
+def get_love_coin(data):
+  if KEY.ID not in data:
+    return -1
+  sql = "select coin from loving_bank where user_id = %d"%data[KEY.ID]
+  try:
+    result = dbhelper.execute_fetchone(sql)
+    return result[0]
+  except:
+    return -1
 
 
 

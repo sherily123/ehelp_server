@@ -104,28 +104,38 @@ def get_user_location(data):
 
   # use location info in data to search near user in Cloud table 'user location'
   # send GET request to Cloud
+  page_index = 0
+  actual = 0
   url = "http://api.map.baidu.com/geosearch/v3/nearby?"
-  suffix = "q=&location=%f,%f&radius=%d&ak=%s&geotable_id=%d"
-  if KEY.RADIUS in data:
-    suffix = suffix%(data[KEY.LONGITUDE], data[KEY.LATITUDE], data[KEY.RADIUS], ak, user_table)
-  else:
-    suffix = suffix%(data[KEY.LONGITUDE], data[KEY.LATITUDE], 10000, ak, user_table)
-  url += suffix
-  
-  req = urllib2.Request(url)
-  response = urllib2.urlopen(req)
-  data = json.loads(response.read())
-  print "From baidu LBS Cloud - get user location: status - %d"%(int(data['status']))
-  print data
+  suffix = "q=&location=%f,%f&radius=%d&ak=%s&geotable_id=%d&page_size=50&page_index=%d"
+  user_id_list = []
 
-  if 'contents' in data:
+  while True:
+    if KEY.RADIUS in data:
+      final_url = url + suffix%(data[KEY.LONGITUDE], data[KEY.LATITUDE], data[KEY.RADIUS], ak, user_table, page_index)
+    else:
+      final_url = url + suffix%(data[KEY.LONGITUDE], data[KEY.LATITUDE], 10000, ak, user_table, page_index)
+  
+    req = urllib2.Request(final_url)
+    response = urllib2.urlopen(req)
+    resp = json.loads(response.read())
+    print "From baidu LBS Cloud - get user location: status - ", resp['status']
+    print resp
+
     # get location array from response
-    contents = data['contents']
+    contents = resp['contents']
+    size = resp['size']
+    actual += size
+    total = resp['total']
     # get user_id from contents
-    user_id_list = []
     for each_loc in contents:
       if KEY.USER_ID in each_loc:
         user_id_list.append(each_loc[KEY.USER_ID])
+    if size != 0 and actual < total:
+      page_index += 1
+    else:
+      break
+
   print "From baidu LBS operation: near user id list:"
   print user_id_list
   return user_id_list
@@ -143,21 +153,33 @@ def get_event_location(data):
 
   # use location info in data to search near events in Cloud table 'event location'
   # send GET request to Cloud
-  url = "http://api.map.baidu.com/geosearch/v3/nearby?"
-  suffix = "q=&location=%f,%f&radius=%d&ak=%s&geotable_id=%d&page_size=50"
-  url += suffix%(data[KEY.LONGITUDE], data[KEY.LATITUDE], 1000000, ak, event_table)
-
-  req = urllib2.Request(url)
-  response = urllib2.urlopen(req)
-  data = json.loads(response.read())
-
-  # get location array from response
-  contents = data['contents']
-  # get event_id from contents
+  page_index = 0
+  url = "http://api.map.baidu.com/geosearch/v3/nearby?q=&location=%f,%f&radius=%d&ak=%s&geotable_id=%d&page_size=50&page_index=%d"
+  actual = 0
   event_id_list = []
-  for each_loc in contents:
-    if KEY.EVENT_ID in each_loc:
-      event_id_list.append(each_loc[KEY.EVENT_ID])
+
+  while True:
+    final_url = url%(data[KEY.LONGITUDE], data[KEY.LATITUDE], 1000000, ak, event_table, page_index)
+    req = urllib2.Request(final_url)
+    response = urllib2.urlopen(req)
+    resp = json.loads(response.read())
+
+    # get location array from response
+    contents = resp['contents']
+    size = resp['size']
+    actual += size
+    total = resp['total']
+    # get event_id from contents
+    for each_loc in contents:
+      if KEY.EVENT_ID in each_loc:
+        event_id_list.append(each_loc[KEY.EVENT_ID])
+
+    if size != 0 and actual < total:
+      page_index += 1
+      print "page_index = %d, actual total = %d"%(page_index, actual)
+    else:
+      break
+
   print "From baidu LBS operation: near event id list:"
   print event_id_list
 

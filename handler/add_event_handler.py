@@ -47,11 +47,13 @@ class Add_Event_Handler(RequestHandler):
           if resp[KEY.TYPE] == 1:
             title = "New Help"
             activity = ""
+            content = resp[KEY.CONTENT]
+            utils.push_message(title, content, event_id, KEY.SENDALL, token_list)
           elif resp[KEY.TYPE] == 2:
             title = "New SOS"
             activity = ""
-          content = resp[KEY.CONTENT]
-          utils.push_message(title, content, event_id, KEY.SENDALL, token_list)
+            content = resp[KEY.CONTENT]
+            utils.push_message(title, content, event_id, KEY.SENDALL, token_list)
       resp[KEY.STATUS] = STATUS.OK
     else:
       resp[KEY.STATUS] = STATUS.ERROR
