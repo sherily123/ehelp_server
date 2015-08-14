@@ -7,6 +7,7 @@ VALUE = 'value'
 ASSESS = 'assess'
 USER_LIST = 'user_list'
 LOVE_COIN = 'love_coin'
+FILEPATH = 'filepath'
 
 # account
 ID = 'id'
@@ -16,6 +17,7 @@ CHAT_TOKEN = 'chat_token'
 SALT = 'salt'
 NICKNAME = 'nickname'
 NAME = 'name'
+USERNAME = 'username'
 
 # user
 USER_ACCOUNT = 'user_account'
@@ -74,6 +76,8 @@ ATTITUDE = 'attitude'
 SKILL = 'skill'
 SATISFY = 'satisfy'
 ASSESS = 'assess'
+VALUE = 'value'
+COMMENT = 'comment'
 
 # baidu LBS
 USER = 0

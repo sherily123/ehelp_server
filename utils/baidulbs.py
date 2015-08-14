@@ -83,11 +83,11 @@ def update_location(data, type):
   # turn string to json object, check if update successfully
   resp = json.loads(response.read())
   if resp['status'] == 0:
-    print "From baidu LBS operation: Successfully update location, geotable: %d, id: %d"%(geotable_id, resp['id'])
-    print values[KEY.LONGITUDE], values[KEY.LATITUDE]
+    #print "From baidu LBS operation: Successfully update location, geotable: %d, id: %d"%(geotable_id, resp['id'])
+    #print values[KEY.LONGITUDE], values[KEY.LATITUDE]
     return True
   else:
-    print "From baidu LBS operation: Failed, return code: %d"%resp['status']
+    #print "From baidu LBS operation: Failed, return code: %d"%resp['status']
     return False
 
 
@@ -119,8 +119,7 @@ def get_user_location(data):
     req = urllib2.Request(final_url)
     response = urllib2.urlopen(req)
     resp = json.loads(response.read())
-    print "From baidu LBS Cloud - get user location: status - ", resp['status']
-    print resp
+    #print "From baidu LBS Cloud - get user location: status - ", resp['status']
 
     # get location array from response
     contents = resp['contents']
@@ -136,8 +135,8 @@ def get_user_location(data):
     else:
       break
 
-  print "From baidu LBS operation: near user id list:"
-  print user_id_list
+  #print "From baidu LBS operation: near user id list:"
+  #print user_id_list
   return user_id_list
 
 
@@ -176,12 +175,12 @@ def get_event_location(data):
 
     if size != 0 and actual < total:
       page_index += 1
-      print "page_index = %d, actual total = %d"%(page_index, actual)
+      #print "page_index = %d, actual total = %d"%(page_index, actual)
     else:
       break
 
-  print "From baidu LBS operation: near event id list:"
-  print event_id_list
+  #print "From baidu LBS operation: near event id list:"
+  #print event_id_list
 
   return event_id_list
 

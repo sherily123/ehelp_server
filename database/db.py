@@ -16,7 +16,7 @@ from dbhelper import dbhelper
 from  utils import KEY
 
 
-  
+
 '''
 add a new account to database.
 @params a dict data:
@@ -299,6 +299,14 @@ def add_event(data):
     if event_id > 0:
       data[KEY.EVENT_ID] = event_id
       update_event(data)
+      # consume love_coins when adding events
+      if data[KEY.TYPE] == 0:
+        minus = "update loving_bank set coin = coin-1 where user_id = %d"
+      elif data[KEY.TYPE] == 1:
+        minus = "update loving_bank set coin = coin-2 where user_id = %d"
+      elif data[KEY.TYPE] == 2:
+        minus = "update loving_bank set coin = coin-3 where user_id = %d"
+      dbhelper.execute(minus%(data[KEY.ID]))
     return event_id
   except:
     return -1
@@ -757,6 +765,7 @@ def get_static_relation(data):
     one_user[KEY.ID] = each_user
     one_user = get_user(one_user)
     if one_user is not None:
+      one_user[KEY.ID] = each_user
       user_list.append(one_user)
 
   return user_list
@@ -816,6 +825,11 @@ def evaluate_user(data):
   value = data[KEY.ATTITUDE] + data[KEY.SKILL] + data[KEY.SATISFY]
   value /= 3.0
 
+  # get type of the event
+  get_type = "select type from event where id = %d"%data[KEY.EVENT_ID]
+  type_result = dbhelper.execute_fetchone(get_type)
+  event_type = type_result[0]
+
   result = 0
   # split user_account string into long array
   user_account = data[KEY.USER_ACCOUNT].split(",")
@@ -833,16 +847,19 @@ def evaluate_user(data):
       get_final_value = "select AVG(value) from evaluation where `to` = %d"
       # update evaluatee's reputation in table 'user'
       update_repu = "update user set reputation = %d where id = %d"
+      # update love coins in table 'loving_bank'
+      if event_type == 0:
+        update_coin = "update loving_bank set coin = coin+1 where id = %d"
+      if event_type == 1:
+        update_coin = "update loving_bank set coin = coin+2 where id = %d"
+      if event_type == 2:
+        update_coin = "update loving_bank set coin = coin+3 where id = %d"
+
       try:
-        print "From evaluate_handler: before REPLACE"
-        print "From evaluate_handler: " + sql%(data[KEY.EVENT_ID], data[KEY.ID], user_id[0], value, data[KEY.ASSESS])
         a = dbhelper.execute(sql%(data[KEY.EVENT_ID], data[KEY.ID], user_id[0], value, data[KEY.ASSESS]))
-        print "From evaluate_handler: EVENT_ID: %d;    FROM: %d;    TO: %d;    REPU: %f;    ASSESS: '%s'"%(data[KEY.EVENT_ID], data[KEY.ID], user_id[0], value, data[KEY.ASSESS])
-        print "From evaluate_handler: after REPLACE"
-        print "From evaluate_handler: result: %d"%a
         final_value = dbhelper.execute_fetchone(get_final_value%(user_id[0]))
-        print "From evaluate_handler: final_value: %f"%(final_value[0])
         dbhelper.execute(update_repu%(final_value[0], user_id[0]))
+        dbhelper.execute(update_coin%(data[KEY.EVENT_ID]))
         result += 1
       except:
         pass
@@ -1023,6 +1040,14 @@ def sign_in(data):
   try:
     sign_in_id = dbhelper.insert(sql%(data[KEY.ID]))
     if sign_in_id > 0:
+      # every day sign in and coin increase 2
+      incre = "update loving_bank set coin = coin+2 where user_id = %d"
+      a = dbhelper.execute(incre%(data[KEY.ID]))
+      print "                                    ", a
+      print "                                    ", a
+      print "                                    ", a
+      print "                                    ", a
+      print "                                    ", a
       return True
     else:
       return False
@@ -1179,9 +1204,10 @@ get current user's location.
 @return user's location in table 'user'
 '''
 def get_user_current_location(data):
-  if KEY.ID not in data:
-    return None
   location = {}
+  
+  if KEY.ID not in data:
+    return location
   sql = "select longitude, latitude from user where id = %d"%(data[KEY.ID])
 
   try:
@@ -1192,7 +1218,7 @@ def get_user_current_location(data):
     print location
     return location
   except:
-    return None
+    return location
 
 
 '''
@@ -1247,6 +1273,64 @@ def get_love_coin(data):
     return result[0]
   except:
     return -1
+
+
+
+'''
+get all uses' ids and accounts.
+no params passed.
+it return a list.
+'''
+def connect_hx():
+    sql = "select * from account"
+    user_list = []
+    user_info = {}
+    sql_result = dbhelper.execute_fetchall(sql)
+    if sql_result is not None:
+        for each_result in sql_result:
+            user_info['username'] = each_result[KEY.ID]
+            user_info[KEY.PASSWORD] = each_result[KEY.PASSWORD]
+            if user_info is not None:
+                user_list.append(user_info)
+    return user_list
+
+
+
+'''
+get user's id by account.
+@params includes user's account.
+@return user's id.
+'''
+def get_user_id(data):
+  if KEY.USER_ACCOUNT not in data:
+    return -1
+  sql = "select id from account where account = %d"%data[KEY.USER_ACCOUNT]
+  sql_result = dbhelper.execute_fetchone(sql)
+  if sql_result is not None:
+    return sql_result[0]
+  else:
+    return -1
+
+
+
+'''
+get user's evaluation.
+@params includes event id, user id.
+@return value if existed.
+        None otherwise.
+'''
+def get_user_evaluate(data):
+  if KEY.ID not in data or KEY.EVENT_ID not in data:
+    return None
+  evaluate = {}
+  sql = "select value, comment from evaluation where event_id = %d and `to` = %d"
+  sql_result = dbhelper.execute_fetchone(sql%(data[KEY.EVENT_ID], data[KEY.ID]))
+  if sql_result is not None:
+    evaluate[KEY.VALUE] = float(sql_result[0])
+    evaluate[KEY.COMMENT] = sql_result[1]
+    return evaluate
+  else:
+    return None
 
 
 

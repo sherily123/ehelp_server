@@ -1,5 +1,7 @@
 #!/usr/python
 
+import os
+
 import tornado
 import tornado.httpserver
 
@@ -34,6 +36,10 @@ from handler import update_push_token_handler
 from handler import test_baidu_handler
 from handler import upload_avatar_handler
 from handler import get_love_coin_handler
+from handler import upload_file_handler
+from handler import download_file_handler
+from handler import user_get_evaluate_handler
+
 
 def main():
   port = 1503
@@ -69,6 +75,9 @@ def main():
       (r"/test_baidu", test_baidu_handler.Test_Baidu_Handler),
       (r"/user/avatar", upload_avatar_handler.Upload_Avatar_Handler),
       (r"/user/love_coins", get_love_coin_handler.Get_Love_Coin_Handler),
+      (r"/file/upload", upload_file_handler.Upload_File_Handler),
+      (r"/file/download", download_file_handler.Download_File_Handler),
+      (r"/user/get_evaluate", user_get_evaluate_handler.User_Get_Evaluate_Handler),
 
     ], debug=True)
   http_server = tornado.httpserver.HTTPServer(application)
